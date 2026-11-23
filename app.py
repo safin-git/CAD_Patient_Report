@@ -637,8 +637,15 @@ header[data-testid=stHeader]{background:transparent}.block-container{padding-top
 .card{overflow-wrap:anywhere;min-width:0}[data-testid=stColumn],[data-testid=column]{min-width:0}
 div[data-testid=stElementContainer]:has(.sidemark){display:none}
 [data-testid=stColumn]:has(.sidemark),[data-testid=column]:has(.sidemark){position:sticky;top:1rem;align-self:flex-start;max-height:calc(100vh - 2rem);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding:4px 10px 10px 4px}
+/* ---- mentor theme alignment: white / light grey / black (risk colours stay green, amber, red) ---- */
+.stApp{background:#FFFFFF}[data-testid=stSidebar]{background:#F4F4F4;border-right:1px solid #e5e5e5}
+.card{border-top:3px solid #000000}.brand .page{color:#000000}
+.shield{background:#F4F4F4;border-color:#d4d4d4;box-shadow:none}
+[data-testid=stFileUploaderDropzone]:hover{border-color:#000000;background:#F4F4F4}
+[data-testid^=stBaseButton]:hover,[data-testid=stPopoverButton]:hover{border-color:#000000!important}
+[data-testid=stExpander] summary{background:#F4F4F4}
 </style>""", unsafe_allow_html=True)
-G, A, R, B = "#16a34a", "#d97706", "#dc2626", "#2563eb"
+G, A, R, B = "#16a34a", "#d97706", "#dc2626", "#000000"
 H = lambda s: st.markdown("".join(l.strip() for l in s.splitlines()), unsafe_allow_html=True)
 fmt = lambda x, u="": "—" if x is None else f"{x:g}{u}" if isinstance(x, (int, float)) and not isinstance(x, bool) else str(x)
 pill = lambda t, c: f'<span class="pill" style="color:{c};border-color:{c}">{t}</span>'
@@ -983,7 +990,7 @@ def manual_entry():
 def p_overview():
     main, d = page("Patient Overview", allow_empty=True)
     with main:
-        H('<div style="text-align:center;margin:20px 0 14px"><div class="shield"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>'
+        H('<div style="text-align:center;margin:20px 0 14px"><div class="shield"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>'
           '<div style="font-size:2rem;font-weight:800;color:#0f172a;margin:16px 0 6px;line-height:1.2">Patient Overview</div>'
           '<div style="max-width:640px;margin:0 auto;font-size:1.02rem;color:#64748b;line-height:1.5">Upload a clinical or laboratory report to view your cardiovascular health assessment, risk scores, trends, and personalized recommendations.</div></div>')
         t1, t2 = st.tabs(["Upload reports", "Enter manually"])
@@ -1133,9 +1140,9 @@ def p_profile():
             b = prow("Body mass index (BMI) (auto)")
             cat = "" if not bmi else "Underweight" if bmi < 18.5 else "Healthy" if bmi < 23 else "Overweight" if bmi < 25 else "Obese range"
             with b:
-                H(f'<div style="text-align:right"><span style="font-size:1.6rem;font-weight:800;color:#2563eb">{bmi if bmi else "—"}</span> <span class="mut">kg/m²</span></div>' if bmi
+                H(f'<div style="text-align:right"><span style="font-size:1.6rem;font-weight:800;color:#000000">{bmi if bmi else "—"}</span> <span class="mut">kg/m²</span></div>' if bmi
                   else '<div style="text-align:right" class="miss">Not present · enter height and weight</div>')
-            H(f'<div class="mut">18.5–22.9 healthy · Regency Healthcare{" · current: " + cat if cat else ""}</div>')
+            H(f'<div class="mut">18.5–22.9 healthy{" · current: " + cat if cat else ""}</div>')
         with st.expander("Habits & lifestyle", True):
             pseg("smoking", "Smoking", ["Never", "Former", "Current"]); pseg("activity", "Physical activity", ["Low", "Moderate", "High"])
             pseg("diet", "Diet quality", ["Low", "Moderate", "High"]); pseg("alcohol", "Alcohol", ["None", "Light", "Moderate", "Heavy"])
@@ -1186,6 +1193,38 @@ def p_scenarios():
                     H(f'<div class="card"><b>{n}</b> {pill("Detected for this patient", B) if det and det["name"] == n else ""}<div class="mut">{desc}</div><div class="row"><span>HR {hr} bpm · BP {s}/{dia} · HRV {hrv} ms</span>{pill(t, tc)}</div></div>')
                     if st.button("Active" if ss.mode == "scenario" and ss.scn == n else "Load", key=f"l{n}", use_container_width=True): load_scenario(n); st.rerun()
 
+# ---------- RAG: explanations grounded in the ./knowledge folder (see rag.py) ----------
+@st.cache_resource(show_spinner="Indexing the knowledge base…")
+def knowledge_index():
+    import rag
+    return rag.build_index()
+
+def p_ask():
+    main, d = page("Ask Cardio AI")
+    with main:
+        try:
+            import rag
+            idx = knowledge_index()
+        except Exception as e:
+            st.error(f"The knowledge module could not be loaded: {e}"); return
+        score, tier, c, _ = risk(d)
+        ctx = rag.patient_context(d, score, tier, c, detect_scenario(values()), LAB, REF, FLAGLAB)
+        st.caption("Answers come from the documents in the knowledge folder. The score always comes from the trained model and is never changed here.")
+        if not idx["docs"]:
+            st.warning("The knowledge base is empty. Add .md, .txt or .pdf files to the knowledge folder.")
+        with st.form("ask"):
+            q = st.text_input("Ask a question about this result", placeholder="e.g. Why is my cholesterol a concern?")
+            sent = st.form_submit_button("Ask", type="primary")
+        if sent:
+            with st.spinner("Searching the knowledge base…"):
+                r = rag.answer(idx, ctx, q.strip())
+            if r["note"]: st.info(r["note"])
+            if r["mode"] == "claude": st.markdown(r["text"])
+            else: st.info("No language model is connected, so the most relevant passages are shown below.")
+            if not r["sources"]: st.warning("No passage in the knowledge base matched this question.")
+            for i, s in enumerate(r["sources"], 1):
+                with st.expander(f"[{i}] {s['source']} · relevance {s['sim']:.2f}"): st.text(s["text"])
+
 OVERVIEW = st.Page(p_overview, title="Patient Overview", icon=":material/upload_file:", default=True)
 DASH = st.Page(p_dashboard, title="Dashboard", icon=":material/dashboard:")
 WAVE = st.Page(p_waveforms, title="Live Waveforms", icon=":material/monitor_heart:")
@@ -1193,7 +1232,8 @@ PROFILE = st.Page(p_profile, title="Patient Profile", icon=":material/person:")
 LABP = st.Page(p_lab, title="Lab Report", icon=":material/science:")
 REPORT = st.Page(p_report, title="Patient Report", icon=":material/description:")
 SCEN = st.Page(p_scenarios, title="Scenarios", icon=":material/grid_view:")
-PAGES = {"Home": [OVERVIEW], "Monitor": [DASH, WAVE], "Patient": [PROFILE, LABP, REPORT, SCEN]}
+ASK = st.Page(p_ask, title="Ask Cardio AI", icon=":material/chat:")
+PAGES = {"Home": [OVERVIEW], "Monitor": [DASH, WAVE], "Patient": [PROFILE, LABP, REPORT, SCEN, ASK]}
 try:
     nav, custom = st.navigation(PAGES, position="hidden"), True
 except TypeError:  # older Streamlit: use the built-in menu and a larger st.logo
