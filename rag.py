@@ -72,7 +72,8 @@ def patient_context(d, score, tier, contrib, scenario, lab, ref, flaglab):
 
 
 def build_query(ctx, question=""):
-    return " ".join([question, ctx["tier"], ctx.get("scenario") or "", *ctx["drivers"], *ctx["history"], *(a[0] for a in ctx["abnormal"])])
+    q = (question or "").strip()  # the question is repeated so it outweighs the patient-context terms
+    return " ".join([q, q, q, ctx["tier"], ctx.get("scenario") or "", *ctx["drivers"], *ctx["history"], *(a[0] for a in ctx["abnormal"])])
 
 
 def _facts(ctx):
