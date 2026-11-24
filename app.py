@@ -1399,70 +1399,87 @@ def _ai_show(h):
         st.markdown(h["text"]); _ai_sources(h["src"]); st.caption(h["meta"])
 
 def p_ask():
-    import os
     main, d = page("Ask Cardio AI")
     with main:
         try:
-            import rag
+            _ask_body(d)
+        except Exception as e:  # show the problem on the page instead of leaving it blank
+            st.error("The Ask Cardio AI page hit an error. The details are below.")
+            st.exception(e)
+
+def _ask_body(d):
+    import os
+    try:
+        import rag
+    except Exception as e:
+        st.error(f"rag.py could not be loaded: {e}"); return
+    st.markdown(_AI_CSS, unsafe_allow_html=True)
+    try:
+        with st.spinner("Loading the knowledge base (the first load can take a minute if it holds large PDFs)…"):
             idx = knowledge_index()
-        except Exception as e:
-            st.error(f"The knowledge module could not be loaded: {e}"); return
-        st.markdown(_AI_CSS, unsafe_allow_html=True)
-        if "ask_hist" not in ss: ss.ask_hist = []
-        hist = ss.ask_hist
-        score, tier, c, _ = risk(d)
-        ctx = rag.patient_context(d, score, tier, c, detect_scenario(values()), LAB, REF, FLAGLAB)
-        n_chunks, n_docs = len(idx["docs"]), len({x["source"] for x in idx["docs"]})
-        mode_txt = "Language model connected" if os.environ.get("ANTHROPIC_API_KEY") else "Retrieval mode"
-        hero = st.empty(); _ai_hero(hero, n_chunks, n_docs, mode_txt, bool(hist))
-        _ai_context(ctx, score, tier)
-        if hist:
-            _, nb = st.columns([5, 1])
-            if nb.button("New chat", key="ai_new", icon=":material/add_comment:", use_container_width=True):
-                ss.ask_hist = []; ss.pop("ask_q", None); st.rerun()
-        sug = st.empty()
-        if not hist:
-            with sug.container():
-                try: box = st.container(key="aisugg")
-                except TypeError: box = st.container()
-                with box:
-                    st.markdown('<div class="aisug">Try asking</div>', unsafe_allow_html=True)
-                    for row in (0, 2):
-                        for col, (t, ic) in zip(st.columns(2), _AI_CARDS[row:row + 2]):
-                            if col.button(t, key=f"aic{row}_{t[:6]}", icon=ic, use_container_width=True): ss.ask_q = t
-        if not n_chunks:
-            st.warning("The knowledge base is empty. Add .md, .txt or .pdf files to the knowledge folder.")
-        msgs = st.container()
+    except Exception as e:
+        st.error(f"The knowledge base could not be loaded: {e}"); return
+    if "ask_hist" not in ss: ss.ask_hist = []
+    hist = ss.ask_hist
+    score, tier, c, _ = risk(d)
+    ctx = rag.patient_context(d, score, tier, c, detect_scenario(values()), LAB, REF, FLAGLAB)
+    n_chunks, n_docs = len(idx["docs"]), len({x["source"] for x in idx["docs"]})
+    mode_txt = "Language model connected" if os.environ.get("ANTHROPIC_API_KEY") else "Retrieval mode"
+    hero = st.empty(); _ai_hero(hero, n_chunks, n_docs, mode_txt, bool(hist))
+    _ai_context(ctx, score, tier)
+    if hist:
+        _, nb = st.columns([5, 1])
+        if nb.button("New chat", key="ai_new", icon=":material/add_comment:", use_container_width=True):
+            ss.ask_hist = []; ss.pop("ask_q", None); st.rerun()
+    sug = st.empty()
+    if not hist:
+        with sug.container():
+            try: box = st.container(key="aisugg")
+            except TypeError: box = st.container()
+            with box:
+                st.markdown('<div class="aisug">Try asking</div>', unsafe_allow_html=True)
+                for row in (0, 2):
+                    for col, (t, ic) in zip(st.columns(2), _AI_CARDS[row:row + 2]):
+                        if col.button(t, key=f"aic{row}_{t[:6]}", icon=ic, use_container_width=True): ss.ask_q = t
+    if not n_chunks:
+        st.warning("The knowledge base is empty. Add .md, .txt or .pdf files to the knowledge folder.")
+    msgs = st.container()
+    try:
         prompt = st.chat_input("Ask Cardio AI about this result…")
-        st.markdown('<div class="aidisc">Answers come only from your knowledge base and can be incomplete. This is not a diagnosis; a doctor must confirm any finding.</div>', unsafe_allow_html=True)
-        pend = ss.pop("ask_q", None)
-        question = (prompt or pend or "").strip()
-        if question and not hist:
-            _ai_hero(hero, n_chunks, n_docs, mode_txt, True); sug.empty()
-        with msgs:
-            for h in hist: _ai_show(h)
-            if question:
-                t0 = time.time()
-                with st.chat_message("user"): st.write(question)
-                with st.chat_message("assistant"):
-                    ph, sd = st.empty(), {}
-                    ph.markdown(_ai_think(0, sd), unsafe_allow_html=True); time.sleep(0.4)
-                    sd[0] = f"{len(ctx['drivers'])} drivers · {len(ctx['abnormal'])} abnormal values"
-                    ph.markdown(_ai_think(1, sd), unsafe_allow_html=True); time.sleep(0.4)
-                    found = rag.retrieve(idx, rag.build_query(ctx, question), 4)
-                    sd[1] = f"{n_chunks} passages searched"
-                    ph.markdown(_ai_think(2, sd), unsafe_allow_html=True); time.sleep(0.4)
-                    sd[2] = f"{len(found)} matched"
-                    ph.markdown(_ai_think(3, sd), unsafe_allow_html=True)
-                    r = rag.answer(idx, ctx, question)
-                    ph.empty()
-                    text = r["text"] if r["mode"] == "claude" else _ai_compose(ctx, score, tier, r["sources"], question)
-                    if r["note"]: st.info(r["note"])
-                    st.write_stream(_ai_type(text))
-                    _ai_sources(r["sources"])
-                    meta = f"{len(r['sources'])} sources · {'language model' if r['mode'] == 'claude' else 'retrieval only'} · {time.time() - t0:.1f}s"
-                    st.caption(meta)
-                hist.append({"q": question, "text": text, "src": r["sources"], "meta": meta, "note": r["note"]})
+    except Exception:  # very old Streamlit: fall back to a simple form
+        with st.form("ai_fallback", clear_on_submit=True):
+            txt = st.text_input("Ask Cardio AI about this result", placeholder="Type your question…")
+            sent = st.form_submit_button("Ask", type="primary")
+        prompt = txt if sent else None
+    st.markdown('<div class="aidisc">Answers come only from your knowledge base and can be incomplete. This is not a diagnosis; a doctor must confirm any finding.</div>', unsafe_allow_html=True)
+    pend = ss.pop("ask_q", None)
+    question = (prompt or pend or "").strip()
+    if question and not hist:
+        _ai_hero(hero, n_chunks, n_docs, mode_txt, True); sug.empty()
+    with msgs:
+        for h in hist: _ai_show(h)
+        if question:
+            t0 = time.time()
+            with st.chat_message("user"): st.write(question)
+            with st.chat_message("assistant"):
+                ph, sd = st.empty(), {}
+                ph.markdown(_ai_think(0, sd), unsafe_allow_html=True); time.sleep(0.4)
+                sd[0] = f"{len(ctx['drivers'])} drivers · {len(ctx['abnormal'])} abnormal values"
+                ph.markdown(_ai_think(1, sd), unsafe_allow_html=True); time.sleep(0.4)
+                found = rag.retrieve(idx, rag.build_query(ctx, question), 4)
+                sd[1] = f"{n_chunks} passages searched"
+                ph.markdown(_ai_think(2, sd), unsafe_allow_html=True); time.sleep(0.4)
+                sd[2] = f"{len(found)} matched"
+                ph.markdown(_ai_think(3, sd), unsafe_allow_html=True)
+                r = rag.answer(idx, ctx, question)
+                ph.empty()
+                text = r["text"] if r["mode"] == "claude" else _ai_compose(ctx, score, tier, r["sources"], question)
+                if r["note"]: st.info(r["note"])
+                st.write_stream(_ai_type(text))
+                _ai_sources(r["sources"])
+                meta = f"{len(r['sources'])} sources · {'language model' if r['mode'] == 'claude' else 'retrieval only'} · {time.time() - t0:.1f}s"
+                st.caption(meta)
+            hist.append({"q": question, "text": text, "src": r["sources"], "meta": meta, "note": r["note"]})
 
 OVERVIEW = st.Page(p_overview, title="Patient Overview", icon=":material/upload_file:", default=True)
 DASH = st.Page(p_dashboard, title="Dashboard", icon=":material/dashboard:")
