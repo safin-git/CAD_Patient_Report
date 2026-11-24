@@ -609,9 +609,13 @@ header[data-testid=stHeader]{background:transparent}.block-container{padding-top
 .row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;padding:8px 0;font-size:.95rem}
 .row:last-child{border-bottom:0}.mut{color:#64748b;font-size:.82rem}
 .chip{display:inline-block;background:#fee2e2;color:#991b1b;border-radius:999px;padding:3px 11px;margin:3px 4px 3px 0;font-size:.82rem;font-weight:600}
-[data-testid=stVerticalBlockBorderWrapper]:has(.brand){background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 4px 14px rgba(15,23,42,.07);padding:4px 8px}
-.brand{font-size:1.15rem;font-weight:800;color:#0f172a;line-height:1.25}.brand .page{display:block;color:#2563eb;font-weight:600;font-size:.9rem}
-.who{font-size:.9rem;line-height:1.35}
+[data-testid=stVerticalBlockBorderWrapper]:has(.brand){background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 4px 14px rgba(15,23,42,.07);padding:22px 24px 28px;min-height:142px;box-sizing:border-box;overflow:visible}
+.brand{font-size:1.04rem;font-weight:800;color:#0f172a;line-height:1.35;overflow-wrap:anywhere}.brand .page{display:block;color:#2563eb;font-weight:600;font-size:.88rem;margin-top:4px}
+.who{font-size:.84rem;line-height:1.45;min-width:0;overflow-wrap:anywhere}.who b{overflow-wrap:anywhere}
+[data-testid=stVerticalBlockBorderWrapper]:has(.brand) [data-testid=stBaseButton-secondary],
+[data-testid=stVerticalBlockBorderWrapper]:has(.brand) [data-testid^=stBaseButton-primary]{white-space:nowrap;min-width:0;width:100%;padding-left:10px!important;padding-right:10px!important;font-size:.86rem}
+[data-testid=stVerticalBlockBorderWrapper]:has(.brand) [data-testid=stHorizontalBlock]{gap:14px}
+[data-testid=stVerticalBlockBorderWrapper]:has(.brand) .pill{white-space:nowrap}
 .shield{width:84px;height:84px;border-radius:50%;background:#dbeafe;border:1px solid #bfdbfe;display:grid;place-items:center;margin:auto;box-shadow:0 10px 24px rgba(37,99,235,.22)}
 .hero{margin:14px 0 6px;font-size:2.1rem;font-weight:800;color:#0f172a}.sub{color:#64748b;max-width:640px;margin:auto;font-size:1.05rem}
 [data-testid=stExpander],[data-testid=stForm]{background:#fff;border:1px solid #e2e8f0!important;border-radius:16px;box-shadow:0 6px 18px rgba(15,23,42,.07)}
@@ -625,7 +629,7 @@ header[data-testid=stHeader]{background:transparent}.block-container{padding-top
 [data-testid^=stBaseButton-secondary],[data-testid=stPopoverButton]{background:#fff!important;border:1px solid #94a3b8!important;border-radius:10px;min-height:42px}
 [data-testid^=stBaseButton-secondary] *,[data-testid=stPopoverButton] *{color:#0f172a!important;font-weight:600}
 [data-testid^=stBaseButton]:hover,[data-testid=stPopoverButton]:hover{border-color:#2563eb!important}
-[data-testid=stVerticalBlockBorderWrapper]:has(.brand) [data-testid=stHorizontalBlock]{align-items:center}
+[data-testid=stVerticalBlockBorderWrapper]:has(.brand) [data-testid=stHorizontalBlock]{align-items:center;min-height:92px}
 [data-testid=stSidebarHeader]{height:2.4rem!important;min-height:0!important;padding:.4rem .8rem!important}
 [data-testid=stSidebar] [data-testid=stImage]{margin:-.4rem 0 .6rem}
 [data-testid=stVerticalBlockBorderWrapper]:not(:has(.brand)){background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 4px 12px rgba(15,23,42,.05)}
@@ -637,15 +641,8 @@ header[data-testid=stHeader]{background:transparent}.block-container{padding-top
 .card{overflow-wrap:anywhere;min-width:0}[data-testid=stColumn],[data-testid=column]{min-width:0}
 div[data-testid=stElementContainer]:has(.sidemark){display:none}
 [data-testid=stColumn]:has(.sidemark),[data-testid=column]:has(.sidemark){position:sticky;top:1rem;align-self:flex-start;max-height:calc(100vh - 2rem);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding:4px 10px 10px 4px}
-/* ---- mentor theme alignment: white / light grey / black (risk colours stay green, amber, red) ---- */
-.stApp{background:#FFFFFF}[data-testid=stSidebar]{background:#F4F4F4;border-right:1px solid #e5e5e5}
-.card{border-top:3px solid #000000}.brand .page{color:#000000}
-.shield{background:#F4F4F4;border-color:#d4d4d4;box-shadow:none}
-[data-testid=stFileUploaderDropzone]:hover{border-color:#000000;background:#F4F4F4}
-[data-testid^=stBaseButton]:hover,[data-testid=stPopoverButton]:hover{border-color:#000000!important}
-[data-testid=stExpander] summary{background:#F4F4F4}
 </style>""", unsafe_allow_html=True)
-G, A, R, B = "#16a34a", "#d97706", "#dc2626", "#000000"
+G, A, R, B = "#16a34a", "#d97706", "#dc2626", "#2563eb"
 H = lambda s: st.markdown("".join(l.strip() for l in s.splitlines()), unsafe_allow_html=True)
 fmt = lambda x, u="": "—" if x is None else f"{x:g}{u}" if isinstance(x, (int, float)) and not isinstance(x, bool) else str(x)
 pill = lambda t, c: f'<span class="pill" style="color:{c};border-color:{c}">{t}</span>'
@@ -668,6 +665,14 @@ def rebuild():
     ss.mode, ss.base = "report", {**MISSING, **merged}
     ss.manual = {k: v for k, v in ss.manual.items() if k not in merged}
 
+
+def remove_uploaded_reports():
+    """Remove uploaded files while keeping values the patient entered manually."""
+    ss.files, ss.seen, ss.conflicts = [], set(), []
+    ss.up = ss.get("up", 0) + 1
+    ss.base, ss.src, ss.scn = dict(MISSING), {}, None
+    ss.mode = "manual" if ss.manual else "empty"
+
 if "mode" not in ss: clear_all()
 get = lambda k: ss.manual[k] if k in ss.manual else ss.base.get(k)
 values = lambda: {k: get(k) for k in KEYS}
@@ -679,7 +684,10 @@ def uploader(label="Upload one or more patient reports (PDF, photo/scan, DOCX, X
         with st.spinner(f"Reading {len(new)} file(s)…"):
             for f in new:
                 ss.seen.add((f.name, f.size)); ss.files.append(extract(f.name, f.getvalue()))
-        rebuild(); st.rerun()
+        rebuild()
+        # After extraction, take the user straight to the dashboard so the
+        # updated risk score, extracted parameters and missing fields are visible.
+        st.switch_page(DASH)
 
 def gauge(score, tier):
     col, L = tcol(score), 0.75 * 2 * 3.14159 * 60
@@ -864,7 +872,7 @@ def stat(k, v):
     return "Normal", G
 
 def miss_label():
-    return "Not present in report" if ss.mode == "report" else "Not entered" if ss.mode == "manual" else "Not in demo data"
+    return "Not present" if ss.mode == "report" else "Not entered" if ss.mode == "manual" else "Not in demo data"
 
 def card(title, keys, d, extra=""):
     rows, have = extra, 0
@@ -907,14 +915,23 @@ def topbar(title):
     det = detect_scenario(v) if has else None
     badge = pill("● " + tier, tcol(score)) if has else ""
     with st.container(border=True):
-        c = st.columns([3, 3, 3, 2, 1.2], vertical_alignment="center")
-        with c[0]: H(f'<div class="brand">Cardio Care AI<span class="page">{title}</span></div>')
-        with c[1]: H(f'<div class="who"><b style="font-size:1.12rem">{who}</b><br><span class="mut">{" · ".join(x for x in (v.get("sex"), src) if x)}</span></div>')
-        with c[2]: H(f'<div class="who"><span class="mut">Detected scenario</span><br><b>{det["name"] if det else "Awaiting patient data"}</b> {badge}</div>')
-        if ov:
-            if c[3].button("Open Dashboard", key="tb_dash", type="primary", use_container_width=True, disabled=not has): st.switch_page(DASH)
-        elif c[3].button("Patient Overview", key="tb_ov", use_container_width=True): st.switch_page(OVERVIEW)
-        if not ov and c[4].button("Upload", key="tb_up", use_container_width=True): st.switch_page(OVERVIEW)
+        # Give each navigation action its own column. This avoids nested columns
+        # shrinking the Upload button and keeps the risk badge comfortably inset.
+        c = st.columns([1.25, 1.75, 2.2, 1.6, 0.9], gap="medium", vertical_alignment="center")
+        with c[0]:
+            H(f'<div class="brand">Cardio Care AI<span class="page">{title}</span></div>')
+        with c[1]:
+            H(f'<div class="who"><b style="font-size:1.04rem">{who}</b><br><span class="mut">{" · ".join(x for x in (v.get("sex"), src) if x)}</span></div>')
+        with c[2]:
+            H(f'<div class="who"><span class="mut">Detected scenario</span><br><b>{det["name"] if det else "Awaiting patient data"}</b><div style="display:block;margin-top:8px;padding:0 0 8px;line-height:1.5">{badge}</div></div>')
+        with c[3]:
+            if ov:
+                if st.button("Open Dashboard", key="tb_dash", type="primary", use_container_width=True, disabled=not has): st.switch_page(DASH)
+            elif st.button("Patient Overview", key="tb_ov", use_container_width=True):
+                st.switch_page(OVERVIEW)
+        with c[4]:
+            if not ov and st.button("Upload", key="tb_up", use_container_width=True):
+                st.switch_page(OVERVIEW)
 
 def hint(k):
     lo, hi = REF.get(k, (None, None))
@@ -990,7 +1007,7 @@ def manual_entry():
 def p_overview():
     main, d = page("Patient Overview", allow_empty=True)
     with main:
-        H('<div style="text-align:center;margin:20px 0 14px"><div class="shield"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>'
+        H('<div style="text-align:center;margin:20px 0 14px"><div class="shield"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>'
           '<div style="font-size:2rem;font-weight:800;color:#0f172a;margin:16px 0 6px;line-height:1.2">Patient Overview</div>'
           '<div style="max-width:640px;margin:0 auto;font-size:1.02rem;color:#64748b;line-height:1.5">Upload a clinical or laboratory report to view your cardiovascular health assessment, risk scores, trends, and personalized recommendations.</div></div>')
         t1, t2 = st.tabs(["Upload reports", "Enter manually"])
@@ -1140,9 +1157,9 @@ def p_profile():
             b = prow("Body mass index (BMI) (auto)")
             cat = "" if not bmi else "Underweight" if bmi < 18.5 else "Healthy" if bmi < 23 else "Overweight" if bmi < 25 else "Obese range"
             with b:
-                H(f'<div style="text-align:right"><span style="font-size:1.6rem;font-weight:800;color:#000000">{bmi if bmi else "—"}</span> <span class="mut">kg/m²</span></div>' if bmi
+                H(f'<div style="text-align:right"><span style="font-size:1.6rem;font-weight:800;color:#2563eb">{bmi if bmi else "—"}</span> <span class="mut">kg/m²</span></div>' if bmi
                   else '<div style="text-align:right" class="miss">Not present · enter height and weight</div>')
-            H(f'<div class="mut">18.5–22.9 healthy{" · current: " + cat if cat else ""}</div>')
+            H(f'<div class="mut">18.5–22.9 healthy · Regency Healthcare{" · current: " + cat if cat else ""}</div>')
         with st.expander("Habits & lifestyle", True):
             pseg("smoking", "Smoking", ["Never", "Former", "Current"]); pseg("activity", "Physical activity", ["Low", "Moderate", "High"])
             pseg("diet", "Diet quality", ["Low", "Moderate", "High"]); pseg("alcohol", "Alcohol", ["None", "Light", "Moderate", "Heavy"])
@@ -1153,6 +1170,25 @@ def p_profile():
         with st.expander("Symptoms", True):
             for k in ["chest_pain", "dyspnea", "fatigue", "palp", "syncope"]: ptoggle(k)
             pseg("psych_stress", "Psychosocial stress", ["Low", "Moderate", "High"])
+        with st.expander("Clinical measurements", True):
+            st.caption("Enter any values that were not included in the uploaded report. Saved values appear on the Dashboard and are used in the risk assessment.")
+            for grp in GROUPS:
+                with st.expander(grp, True):
+                    params = [p for p in PARAMS if p[7] == grp]
+                    for start in range(0, len(params), 2):
+                        cols = st.columns(2)
+                        for col, p in zip(cols, params[start:start + 2]):
+                            with col:
+                                pnum(p[0], p[1], p[2], p[3], p[4], p[5])
+        with st.expander("ECG rhythm"):
+            wk = "p_rhythm"
+            ss[wk] = get("rhythm") or ""
+            b = prow("Rhythm")
+            b.text_input("ECG rhythm", key=wk, label_visibility="collapsed",
+                         placeholder="e.g. Sinus rhythm",
+                         on_change=_set, args=("rhythm", wk))
+            if not get("rhythm"):
+                b.markdown(":orange[Not present · enter manually]")
 
 def p_lab():
     main, d = page("Lab Report")
@@ -1193,13 +1229,177 @@ def p_scenarios():
                     H(f'<div class="card"><b>{n}</b> {pill("Detected for this patient", B) if det and det["name"] == n else ""}<div class="mut">{desc}</div><div class="row"><span>HR {hr} bpm · BP {s}/{dia} · HRV {hrv} ms</span>{pill(t, tc)}</div></div>')
                     if st.button("Active" if ss.mode == "scenario" and ss.scn == n else "Load", key=f"l{n}", use_container_width=True): load_scenario(n); st.rerun()
 
-# ---------- RAG: explanations grounded in the ./knowledge folder (see rag.py) ----------
-@st.cache_resource(show_spinner="Indexing the knowledge base…")
+# ---------- Ask Cardio AI: chat page, retrieval-augmented answers grounded in ./knowledge (see rag.py) ----------
+_AI_CSS = """<style>
+@keyframes aiSpin{to{transform:rotate(360deg)}}
+@keyframes aiPulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.09);filter:brightness(1.2)}}
+@keyframes aiShimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@keyframes aiRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes aiBar{from{width:0}to{width:var(--w)}}
+@keyframes aiDot{0%,80%,100%{opacity:.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+@keyframes aiBlink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes aiScan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes aiFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(26px,18px) scale(1.12)}}
+@keyframes aiEcg{from{stroke-dashoffset:520}to{stroke-dashoffset:0}}
+.aihero2{position:relative;overflow:hidden;text-align:center;padding:30px 24px 24px;margin-bottom:12px;border-radius:24px;border:1px solid #e0e7ff;background:linear-gradient(135deg,#f8faff 0%,#eef2ff 50%,#faf5ff 100%);box-shadow:0 10px 34px rgba(79,70,229,.10)}
+.aihero2>*{position:relative}
+.aihero2 .aiblob{position:absolute;border-radius:50%;filter:blur(40px);opacity:.5;animation:aiFloat 9s ease-in-out infinite}
+.aihero2 .b1{width:190px;height:190px;left:-50px;top:-70px;background:#93c5fd}
+.aihero2 .b2{width:210px;height:210px;right:-60px;bottom:-100px;background:#c4b5fd;animation-delay:-4s}
+.aihero2.cp{display:flex;align-items:center;gap:16px;text-align:left;padding:14px 20px}
+.aiorb{position:relative;width:88px;height:88px;margin:0 auto 12px;flex:none}
+.cp .aiorb{width:46px;height:46px;margin:0}
+.aiorb .core{position:absolute;inset:27%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bfdbfe,#2563eb 55%,#4c1d95);box-shadow:0 0 22px rgba(96,165,250,.8),0 0 50px rgba(124,58,237,.4);animation:aiPulse 2.4s ease-in-out infinite}
+.aiorb .rg{position:absolute;border-radius:50%;border:2px solid transparent}
+.aiorb .r1{inset:10%;border-top-color:#60a5fa;border-right-color:#60a5fa;animation:aiSpin 3.2s linear infinite}
+.aiorb .r2{inset:0;border-bottom-color:#a78bfa;border-left-color:#a78bfa;animation:aiSpin 5.4s linear infinite reverse}
+.aiorb .r3{inset:19%;border:1px dashed rgba(100,116,139,.45);animation:aiSpin 14s linear infinite}
+.aiorb .orb{position:absolute;inset:0}.aiorb .orb i{position:absolute;left:50%;top:0;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#38bdf8;box-shadow:0 0 8px #38bdf8}
+.aiorb .o1{animation:aiSpin 4s linear infinite}.aiorb .o2{animation:aiSpin 7s linear infinite reverse}.aiorb .o2 i{background:#a78bfa;box-shadow:0 0 8px #a78bfa}
+.aititle2{font-size:2.05rem;font-weight:800;line-height:1.15;background:linear-gradient(90deg,#1d4ed8,#7c3aed,#0891b2,#1d4ed8);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:aiShimmer 7s linear infinite}
+.cp .aititle2{font-size:1.2rem}
+.aisub2{margin:8px auto 14px;max-width:560px;font-size:.98rem;line-height:1.5;color:#64748b}.cp .aisub2{display:none}
+.aibadges2{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.cp .aibadges2{margin-left:auto;justify-content:flex-end}
+.aib2{display:inline-flex;align-items:center;gap:7px;padding:4px 12px;border-radius:999px;font-size:.74rem;font-weight:700;color:#334155;background:#fff;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(15,23,42,.05)}
+.aigd{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;animation:aiBlink 1.6s ease-in-out infinite}
+.aiecg{position:absolute;left:0;right:0;bottom:4px;width:100%;height:30px;opacity:.55}.cp .aiecg{display:none}
+.aiecg .trk{fill:none;stroke:rgba(100,116,139,.18);stroke-width:1.5}
+.aiecg .pls{fill:none;stroke:#3b82f6;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:90 430;animation:aiEcg 2.8s linear infinite}
+.aictx{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px;padding:10px 14px;border-radius:14px;background:#fff;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+.aictx-l{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.68rem;color:#64748b;margin-right:2px}
+.aip{padding:3px 10px;border-radius:999px;font-weight:700;font-size:.76rem;border:1.5px solid;background:#fff}
+.aid{padding:3px 10px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:600;font-size:.76rem}
+.aisug{font-size:.74rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#64748b;margin:4px 0 8px}
+.st-key-aisugg [data-testid^=stBaseButton-secondary]{justify-content:flex-start!important;text-align:left!important;min-height:66px!important;padding:12px 16px!important;border-radius:16px!important;border:1px solid #e2e8f0!important;
+ background:linear-gradient(135deg,#fff,#f8faff)!important;box-shadow:0 4px 14px rgba(15,23,42,.06)!important;transition:transform .18s,box-shadow .18s,border-color .18s!important}
+.st-key-aisugg [data-testid^=stBaseButton-secondary]:hover{transform:translateY(-3px)!important;border-color:#818cf8!important;box-shadow:0 12px 26px rgba(79,70,229,.18)!important}
+.st-key-aisugg [data-testid^=stBaseButton-secondary] *{font-weight:700!important;font-size:.92rem!important;color:#1e293b!important}
+.st-key-aisugg [data-testid^=stBaseButton-secondary] span[data-testid=stIconMaterial]{color:#4f46e5!important}
+[data-testid=stChatMessage]{background:transparent!important;border:0!important;padding:8px 0!important;gap:14px}
+[data-testid=stChatMessage]:has([data-testid=stChatMessageAvatarUser]){flex-direction:row-reverse}
+[data-testid=stChatMessage]:has([data-testid=stChatMessageAvatarUser]) [data-testid=stChatMessageContent]{width:fit-content;max-width:78%;margin-left:auto;padding:10px 18px;border-radius:20px 20px 6px 20px;background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1px solid #e0e7ff}
+[data-testid=stChatMessageAvatarUser]{display:none!important}
+[data-testid=stChatMessageAvatarAssistant]{background:linear-gradient(135deg,#2563eb,#7c3aed)!important;color:#fff!important;box-shadow:0 4px 12px rgba(79,70,229,.35)}
+[data-testid=stChatMessageAvatarAssistant] svg{fill:#fff!important;color:#fff!important}
+[data-testid=stChatInput]{border-radius:30px!important;border:1.8px solid transparent!important;padding:4px 6px!important;
+ background-image:linear-gradient(#fff,#fff),linear-gradient(90deg,#60a5fa,#a78bfa,#22d3ee)!important;background-origin:border-box!important;background-clip:padding-box,border-box!important;
+ box-shadow:0 12px 32px rgba(79,70,229,.16)!important;transition:box-shadow .2s!important}
+[data-testid=stChatInput]:focus-within{box-shadow:0 14px 40px rgba(79,70,229,.30)!important}
+[data-testid=stChatInput]>div{background:transparent!important;border:0!important}
+[data-testid=stChatInput] textarea{font-size:1rem!important;background:transparent!important}
+[data-testid=stChatInputSubmitButton]{background:linear-gradient(135deg,#2563eb,#7c3aed)!important;border-radius:50%!important;border:0!important}
+[data-testid=stChatInputSubmitButton] svg{fill:#fff!important;color:#fff!important}
+.aidisc{text-align:center;font-size:.74rem;color:#94a3b8;margin:8px 0 2px}
+.aithink{position:relative;overflow:hidden;padding:14px 18px;border-radius:14px;border:1px solid #c7d2fe;background:linear-gradient(180deg,#f8faff,#eef2ff);animation:aiRise .35s ease both}
+.aithink:after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,transparent,#2563eb,#7c3aed,transparent);animation:aiScan 1.3s ease-in-out infinite}
+.aithink-h{display:flex;align-items:center;gap:10px;font-size:.95rem;color:#1e293b;margin-bottom:8px}
+.aispin{display:inline-block;width:16px;height:16px;border-radius:50%;border:2.5px solid #c7d2fe;border-top-color:#2563eb;animation:aiSpin .8s linear infinite;flex:none}
+.aispin.sm{width:12px;height:12px;border-width:2px}
+.aidots i{display:inline-block;width:5px;height:5px;margin-left:3px;border-radius:50%;background:#2563eb;animation:aiDot 1.1s ease-in-out infinite}.aidots i:nth-child(2){animation-delay:.15s}.aidots i:nth-child(3){animation-delay:.3s}
+.aistep{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:.88rem;color:#94a3b8}
+.aistep .ic{width:18px;text-align:center;flex:none;font-weight:800}
+.aistep.done{color:#16a34a}.aistep.act{color:#0f172a;font-weight:700}
+.aistep .det{margin-left:auto;font-size:.76rem;font-weight:600;color:#64748b}
+.aistep.act .lbl{background:linear-gradient(90deg,#0f172a 20%,#2563eb 50%,#0f172a 80%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:aiShimmer 1.4s linear infinite}
+.aipills{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 6px}
+.aipill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 6px;border-radius:999px;background:#fff;border:1px solid #e2e8f0;font-size:.78rem;font-weight:600;color:#334155;box-shadow:0 2px 8px rgba(15,23,42,.05);opacity:0;animation:aiRise .45s ease forwards}
+.aipill b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-size:.7rem}
+.aisrc{padding:13px 16px;margin:0 0 10px;border-radius:14px;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #2563eb;box-shadow:0 4px 12px rgba(15,23,42,.05);opacity:0;animation:aiRise .5s ease forwards}
+.aisrc-h{display:flex;align-items:center;gap:9px;font-size:.88rem;color:#0f172a;flex-wrap:wrap}
+.aisrc-n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#0f172a;color:#fff;font-size:.74rem;font-weight:800}
+.aisrc-s{margin-left:auto;font-size:.74rem;font-weight:700;color:#475569}
+.aibar{height:5px;margin:8px 0 9px;border-radius:99px;background:#e2e8f0;overflow:hidden}
+.aibar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2563eb,#7c3aed);animation:aiBar .9s ease-out both}
+.aisrc-t{font-size:.84rem;line-height:1.55;color:#334155}
+@media (prefers-reduced-motion:reduce){.aihero2 *,.aithink,.aithink *,.aisrc,.aipill,.aibar i,.aiecg *{animation:none!important}.aisrc,.aipill{opacity:1}}
+</style>"""
+_AI_STOP = {"what", "should", "would", "could", "does", "your", "with", "this", "that", "about", "have", "from", "which", "there", "their", "mean", "means", "when", "were", "they", "them", "then", "into"}
+_AI_STAGES = ["Reading patient data", "Searching knowledge base", "Ranking matches", "Writing answer"]
+_AI_CARDS = [("Why is my score at this level?", ":material/monitoring:"), ("What should I do next?", ":material/directions:"),
+             ("Which factors matter most?", ":material/leaderboard:"), ("What do my abnormal values mean?", ":material/science:")]
+
+@st.cache_resource(show_spinner=False)
 def knowledge_index():
     import rag
     return rag.build_index()
 
+def _ai_md(target, html):
+    target.markdown("".join(l.strip() for l in html.splitlines()), unsafe_allow_html=True)
+
+def _ai_hero(target, n_chunks, n_docs, mode_txt, compact):
+    orb = '<div class="aiorb"><div class="rg r2"></div><div class="rg r1"></div><div class="rg r3"></div><div class="core"></div><div class="orb o1"><i></i></div><div class="orb o2"><i></i></div></div>'
+    ecg = ('<svg class="aiecg" viewBox="0 0 520 30" preserveAspectRatio="none"><path class="trk" d="M0 15 H120 L132 15 L140 3 L150 27 L158 15 H300 L312 15 L320 5 L330 25 L338 15 H520"/>'
+           '<path class="pls" d="M0 15 H120 L132 15 L140 3 L150 27 L158 15 H300 L312 15 L320 5 L330 25 L338 15 H520"/></svg>')
+    badges = (f'<div class="aibadges2"><span class="aib2"><i class="aigd"></i>Knowledge base online</span>'
+              f'<span class="aib2">{n_chunks} passages · {n_docs} documents</span><span class="aib2">{mode_txt}</span></div>')
+    _ai_md(target, f'<div class="aihero2{" cp" if compact else ""}"><div class="aiblob b1"></div><div class="aiblob b2"></div>{orb}'
+                   f'<div><div class="aititle2">Ask Cardio AI</div><div class="aisub2">Ask anything about this patient\'s result. Answers come from your medical knowledge base, with sources you can check.</div></div>'
+                   f'{badges}{ecg}</div>')
+
+def _ai_context(ctx, score, tier):
+    top = sorted(ctx["drivers"].items(), key=lambda x: -x[1])[:3]
+    chips = "".join(f'<span class="aid">{k} +{p}</span>' for k, p in top)
+    scn = f'<span class="aid">{ctx["scenario"]}</span>' if ctx.get("scenario") else ""
+    H(f'<div class="aictx"><span class="aictx-l">Discussing</span>{pill(f"Score {score} · {tier}", tcol(score))}{scn}{chips}</div>')
+
+def _ai_think(i, sd):
+    rows = ""
+    for j, s in enumerate(_AI_STAGES):
+        cls = "done" if j < i else "act" if j == i else ""
+        ic = "✓" if j < i else '<span class="aispin sm"></span>' if j == i else "○"
+        d = f'<span class="det">{sd[j]}</span>' if j in sd and j < i else ""
+        rows += f'<div class="aistep {cls}"><span class="ic">{ic}</span><span class="lbl">{s}</span>{d}</div>'
+    return ('<div class="aithink"><div class="aithink-h"><span class="aispin"></span><b>Cardio AI is working</b>'
+            '<span class="aidots"><i></i><i></i><i></i></span></div>' + rows + '</div>')
+
+def _ai_type(text):
+    for tok in re.split(r"(\s+)", text):
+        yield tok
+        time.sleep(0.012)
+
+def _ai_compose(ctx, score, tier, src, question):
+    """Answer used when no language model is connected: the model's own numbers plus sentences quoted from the retrieved passages."""
+    lead = f"Your result is **{score}/100 ({tier})**, calculated by the trained model."
+    drv = sorted(ctx["drivers"].items(), key=lambda x: -x[1])[:3]
+    if drv: lead += " The main factors behind it are " + ", ".join(f"**{k}**" for k, _ in drv) + "."
+    if not src:
+        return lead + "\n\nI could not find a passage in the knowledge base that matches this question. Try rephrasing it, or add more documents to the knowledge folder."
+    terms = set(re.findall(r"[a-z]{4,}", " ".join([question, *ctx["drivers"], *(a[0] for a in ctx["abnormal"])]).lower()))
+    qt = set(re.findall(r"[a-z]{4,}", question.lower())) - _AI_STOP
+    pts = []
+    for i, p in enumerate(src[:4], 1):
+        clean = re.sub(r"[*_`>]", "", re.sub(r"^#+\s.*$", "", p["text"], flags=re.M))
+        sents = [s.strip() for s in re.split(r"(?<=[.!?])\s+", re.sub(r"\s+", " ", clean)) if 35 <= len(s.strip()) <= 320]
+        if not sents: continue
+        W = lambda s: set(re.findall(r"[a-z]{4,}", s.lower()))
+        best = max(sents, key=lambda s: 3 * len(qt & W(s)) + len(terms & W(s)) - (len(s) > 200))
+        if all(best not in x for x in pts): pts.append(f"- {best} [{i}]")
+    if not pts: return lead + "\n\nThe matching passages are listed below."
+    return (lead + "\n\n**What the knowledge base says**\n\n" + "\n".join(pts[:3]) +
+            "\n\nNo language model is connected, so these points are quoted directly from your documents.")
+
+def _ai_sources(src):
+    import html as _h
+    if not src: return
+    mx = max(s["sim"] for s in src) or 1
+    pills = "".join(f'<span class="aipill" style="animation-delay:{i * 0.12:.2f}s"><b>{i}</b>{_h.escape(s["source"])}</span>' for i, s in enumerate(src, 1))
+    st.markdown(f'<div class="aipills">{pills}</div>', unsafe_allow_html=True)
+    with st.expander(f"View {len(src)} source passage{'s' if len(src) != 1 else ''}"):
+        cards = "".join(
+            f'<div class="aisrc" style="animation-delay:{i * 0.12:.2f}s"><div class="aisrc-h"><span class="aisrc-n">{i}</span><b>{_h.escape(s["source"])}</b>'
+            f'<span class="aisrc-s">similarity {s["sim"]:.2f}</span></div><div class="aibar"><i style="--w:{max(6, round(100 * s["sim"] / mx))}%;animation-delay:{i * 0.12:.2f}s"></i></div>'
+            f'<div class="aisrc-t">{_h.escape(s["text"][:650].strip()).replace(chr(10), "<br>")}{"…" if len(s["text"]) > 650 else ""}</div></div>'
+            for i, s in enumerate(src, 1))
+        st.markdown(cards, unsafe_allow_html=True)
+
+def _ai_show(h):
+    with st.chat_message("user"): st.write(h["q"])
+    with st.chat_message("assistant"):
+        if h["note"]: st.info(h["note"])
+        st.markdown(h["text"]); _ai_sources(h["src"]); st.caption(h["meta"])
+
 def p_ask():
+    import os
     main, d = page("Ask Cardio AI")
     with main:
         try:
@@ -1207,23 +1407,62 @@ def p_ask():
             idx = knowledge_index()
         except Exception as e:
             st.error(f"The knowledge module could not be loaded: {e}"); return
+        st.markdown(_AI_CSS, unsafe_allow_html=True)
+        if "ask_hist" not in ss: ss.ask_hist = []
+        hist = ss.ask_hist
         score, tier, c, _ = risk(d)
         ctx = rag.patient_context(d, score, tier, c, detect_scenario(values()), LAB, REF, FLAGLAB)
-        st.caption("Answers come from the documents in the knowledge folder. The score always comes from the trained model and is never changed here.")
-        if not idx["docs"]:
+        n_chunks, n_docs = len(idx["docs"]), len({x["source"] for x in idx["docs"]})
+        mode_txt = "Language model connected" if os.environ.get("ANTHROPIC_API_KEY") else "Retrieval mode"
+        hero = st.empty(); _ai_hero(hero, n_chunks, n_docs, mode_txt, bool(hist))
+        _ai_context(ctx, score, tier)
+        if hist:
+            _, nb = st.columns([5, 1])
+            if nb.button("New chat", key="ai_new", icon=":material/add_comment:", use_container_width=True):
+                ss.ask_hist = []; ss.pop("ask_q", None); st.rerun()
+        sug = st.empty()
+        if not hist:
+            with sug.container():
+                try: box = st.container(key="aisugg")
+                except TypeError: box = st.container()
+                with box:
+                    st.markdown('<div class="aisug">Try asking</div>', unsafe_allow_html=True)
+                    for row in (0, 2):
+                        for col, (t, ic) in zip(st.columns(2), _AI_CARDS[row:row + 2]):
+                            if col.button(t, key=f"aic{row}_{t[:6]}", icon=ic, use_container_width=True): ss.ask_q = t
+        if not n_chunks:
             st.warning("The knowledge base is empty. Add .md, .txt or .pdf files to the knowledge folder.")
-        with st.form("ask"):
-            q = st.text_input("Ask a question about this result", placeholder="e.g. Why is my cholesterol a concern?")
-            sent = st.form_submit_button("Ask", type="primary")
-        if sent:
-            with st.spinner("Searching the knowledge base…"):
-                r = rag.answer(idx, ctx, q.strip())
-            if r["note"]: st.info(r["note"])
-            if r["mode"] == "claude": st.markdown(r["text"])
-            else: st.info("No language model is connected, so the most relevant passages are shown below.")
-            if not r["sources"]: st.warning("No passage in the knowledge base matched this question.")
-            for i, s in enumerate(r["sources"], 1):
-                with st.expander(f"[{i}] {s['source']} · relevance {s['sim']:.2f}"): st.text(s["text"])
+        msgs = st.container()
+        prompt = st.chat_input("Ask Cardio AI about this result…")
+        st.markdown('<div class="aidisc">Answers come only from your knowledge base and can be incomplete. This is not a diagnosis; a doctor must confirm any finding.</div>', unsafe_allow_html=True)
+        pend = ss.pop("ask_q", None)
+        question = (prompt or pend or "").strip()
+        if question and not hist:
+            _ai_hero(hero, n_chunks, n_docs, mode_txt, True); sug.empty()
+        with msgs:
+            for h in hist: _ai_show(h)
+            if question:
+                t0 = time.time()
+                with st.chat_message("user"): st.write(question)
+                with st.chat_message("assistant"):
+                    ph, sd = st.empty(), {}
+                    ph.markdown(_ai_think(0, sd), unsafe_allow_html=True); time.sleep(0.4)
+                    sd[0] = f"{len(ctx['drivers'])} drivers · {len(ctx['abnormal'])} abnormal values"
+                    ph.markdown(_ai_think(1, sd), unsafe_allow_html=True); time.sleep(0.4)
+                    found = rag.retrieve(idx, rag.build_query(ctx, question), 4)
+                    sd[1] = f"{n_chunks} passages searched"
+                    ph.markdown(_ai_think(2, sd), unsafe_allow_html=True); time.sleep(0.4)
+                    sd[2] = f"{len(found)} matched"
+                    ph.markdown(_ai_think(3, sd), unsafe_allow_html=True)
+                    r = rag.answer(idx, ctx, question)
+                    ph.empty()
+                    text = r["text"] if r["mode"] == "claude" else _ai_compose(ctx, score, tier, r["sources"], question)
+                    if r["note"]: st.info(r["note"])
+                    st.write_stream(_ai_type(text))
+                    _ai_sources(r["sources"])
+                    meta = f"{len(r['sources'])} sources · {'language model' if r['mode'] == 'claude' else 'retrieval only'} · {time.time() - t0:.1f}s"
+                    st.caption(meta)
+                hist.append({"q": question, "text": text, "src": r["sources"], "meta": meta, "note": r["note"]})
 
 OVERVIEW = st.Page(p_overview, title="Patient Overview", icon=":material/upload_file:", default=True)
 DASH = st.Page(p_dashboard, title="Dashboard", icon=":material/dashboard:")
@@ -1232,7 +1471,7 @@ PROFILE = st.Page(p_profile, title="Patient Profile", icon=":material/person:")
 LABP = st.Page(p_lab, title="Lab Report", icon=":material/science:")
 REPORT = st.Page(p_report, title="Patient Report", icon=":material/description:")
 SCEN = st.Page(p_scenarios, title="Scenarios", icon=":material/grid_view:")
-ASK = st.Page(p_ask, title="Ask Cardio AI", icon=":material/chat:")
+ASK = st.Page(p_ask, title="Ask Cardio AI", icon=":material/smart_toy:")
 PAGES = {"Home": [OVERVIEW], "Monitor": [DASH, WAVE], "Patient": [PROFILE, LABP, REPORT, SCEN, ASK]}
 try:
     nav, custom = st.navigation(PAGES, position="hidden"), True
