@@ -20,6 +20,20 @@ SYSTEM = ("You explain the output of a coronary artery disease (CAD) screening m
 # ---------- ingestion ----------
 def _read(path):
     if path.suffix.lower() == ".pdf":
+        try:  # pypdfium2 is much faster than pdfplumber on long guidelines
+            import pypdfium2 as pdfium
+            doc = pdfium.PdfDocument(str(path))
+            pages = []
+            for i in range(len(doc)):
+                tp = doc[i].get_textpage()
+                pages.append(tp.get_text_range())
+                tp.close()
+            doc.close()
+            text = "\n".join(pages)
+            if len(text.strip()) > 200:
+                return text
+        except Exception:
+            pass
         import pdfplumber
         with pdfplumber.open(path) as pdf:
             return "\n".join((p.extract_text() or "") for p in pdf.pages)
